@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEURONEX - Next Gen News Portal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Theme toggle button -->
+  <button id="theme-toggle" class="theme-btn">🌙 / ☀️</button>
+
+  <!-- Site name -->
+  <header class="site-header">
+    <h1>NEURONEX</h1>
+  </header>
+
+  <!-- Search bar -->
+  <div class="search-container">
+    <input type="text" id="search-input" placeholder="Search news...">
+    <button id="search-btn">Search</button>
+  </div>
+
+  <!-- Breaking news headline -->
+  <section class="breaking-news">
+    <h2>Breaking News:</h2>
+    <p id="breaking-news">Loading...</p>
+  </section>
+
+  <!-- Categories -->
+  <section class="categories">
+    <button class="cat-btn" data-category="sports">Sports</button>
+    <button class="cat-btn" data-category="celebrities">Celebs</button>
+    <button class="cat-btn" data-category="movies">Movies</button>
+    <button class="cat-btn" data-category="economy">Economy</button>
+    <button class="cat-btn" data-category="government">Governments</button>
+    <button class="cat-btn" data-category="gossip">Gossip</button>
+  </section>
+
+  <!-- News articles container -->
+  <section id="articles-container" class="articles-grid">
+    <!-- Articles rendered dynamically -->
+  </section>
+
+  <!-- AI suggestions -->
+  <aside class="suggestions">
+    <h3>Suggested for You</h3>
+    <div id="suggestions-container"></div>
+  </aside>
+
+  <!-- Scripts -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>

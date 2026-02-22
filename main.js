@@ -4,14 +4,14 @@ import { trackReading } from './utils/storage.js';
 import { suggestArticles } from './components/suggestions.js';
 import { applyTheme } from './components/theme.js';
 
-let allArticles = [];        // All fetched articles from APIs
-let filteredArticles = [];   // Articles filtered by search or category
-let breakingIndex = 0;       // Tracks breaking news rotation
-let breakingInterval;        // Interval for auto-rotation
+let allArticles = [];
+let filteredArticles = [];
+let breakingIndex = 0;
+let breakingInterval;
 
-// ==========================
-// 1. FETCH NEWS FROM /API
-// ==========================
+// ---------------------
+// FETCH ARTICLES
+// ---------------------
 async function loadNews() {
   try {
     const res = await fetch('/api/news');
@@ -25,24 +25,21 @@ async function loadNews() {
     allArticles = data.articles;
     filteredArticles = [...allArticles];
 
-    // Initial breaking news = random article
-    const randomIndex = Math.floor(Math.random() * allArticles.length);
-    breakingIndex = randomIndex;
+    breakingIndex = Math.floor(Math.random() * allArticles.length);
     document.getElementById('breaking-news').innerText = allArticles[breakingIndex].title;
 
     renderArticles(filteredArticles);
     trackReading(allArticles);
     suggestArticles(allArticles);
-
   } catch (err) {
     console.error(err);
     document.getElementById('breaking-news').innerText = 'Failed to load news.';
   }
 }
 
-// ==========================
-// 2. SEARCH FUNCTIONALITY
-// ==========================
+// ---------------------
+// SEARCH
+// ---------------------
 function setupSearch() {
   const searchInput = document.getElementById('search-input');
   const searchBtn = document.getElementById('search-btn');
@@ -56,8 +53,7 @@ function setupSearch() {
     }
 
     filteredArticles = allArticles.filter(article =>
-      (article.title && article.title.toLowerCase().includes(query)) ||
-      (article.description && article.description.toLowerCase().includes(query))
+      (article.title + ' ' + article.description).toLowerCase().includes(query)
     );
 
     if (!filteredArticles.length) {
@@ -75,33 +71,27 @@ function setupSearch() {
   });
 }
 
-// ==========================
-// 3. CATEGORY FILTERING
-// ==========================
+// ---------------------
+// CATEGORY FILTERING
+// ---------------------
 function setupCategories() {
   const catButtons = document.querySelectorAll('.cat-btn');
 
   const highlightCategory = (selectedCategory) => {
     catButtons.forEach(btn => {
-      if (btn.dataset.category === selectedCategory) {
-        btn.style.boxShadow = '0 0 25px #ff0080, 0 0 40px #7928ca';
-        btn.style.transform = 'scale(1.1) rotate(-2deg)';
-      } else {
-        btn.style.boxShadow = '';
-        btn.style.transform = '';
-      }
+      btn.style.boxShadow = btn.dataset.category === selectedCategory
+        ? '0 0 25px #ff0080, 0 0 40px #7928ca'
+        : '';
+      btn.style.transform = btn.dataset.category === selectedCategory ? 'scale(1.1) rotate(-2deg)' : '';
     });
   };
 
   catButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      const category = btn.dataset.category.toLowerCase();
+      const category = btn.dataset.category;
       highlightCategory(category);
 
-      filteredArticles = allArticles.filter(article => {
-        const combined = ((article.title || '') + ' ' + (article.description || '')).toLowerCase();
-        return combined.includes(category);
-      });
+      filteredArticles = allArticles.filter(article => article.category === category);
 
       if (!filteredArticles.length) {
         document.getElementById('articles-container').innerHTML =
@@ -114,14 +104,12 @@ function setupCategories() {
   });
 }
 
-// ==========================
-// 4. BREAKING NEWS ROTATION
-// ==========================
+// ---------------------
+// BREAKING NEWS ROTATION
+// ---------------------
 function startBreakingNewsRotation() {
   const breakingEl = document.getElementById('breaking-news');
   if (!allArticles.length) return;
-
-  breakingEl.innerText = allArticles[breakingIndex].title;
 
   breakingInterval = setInterval(() => {
     breakingIndex = (breakingIndex + 1) % allArticles.length;
@@ -130,12 +118,12 @@ function startBreakingNewsRotation() {
       breakingEl.innerText = allArticles[breakingIndex].title;
       breakingEl.style.opacity = 1;
     }, 500);
-  }, 30000); // Every 30 seconds
+  }, 30000);
 }
 
-// ==========================
-// 5. INITIALIZE EVERYTHING
-// ==========================
+// ---------------------
+// INITIALIZE
+// ---------------------
 window.addEventListener('DOMContentLoaded', () => {
   loadNews();
   setupSearch();

@@ -1,8 +1,10 @@
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
-const GNEWS_KEY = process.env.GNEWS_KEY;
-const WORLDNEWS_KEY = process.env.WORLDNEWS_KEY;
+import fetch from 'node-fetch';
 
-export async function fetchAllNews() {
+export default async function handler(req, res) {
+  const NEWSAPI_KEY = process.env.NEWSAPI_KEY;
+  const GNEWS_KEY = process.env.GNEWS_KEY;
+  const WORLDNEWS_KEY = process.env.WORLDNEWS_KEY;
+
   const endpoints = [
     `https://newsapi.org/v2/top-headlines?language=en&pageSize=50&apiKey=${NEWSAPI_KEY}`,
     `https://gnews.io/api/v4/top-headlines?lang=en&max=50&token=${GNEWS_KEY}`,
@@ -13,8 +15,8 @@ export async function fetchAllNews() {
 
   for (const url of endpoints) {
     try {
-      const res = await fetch(url);
-      const data = await res.json();
+      const r = await fetch(url);
+      const data = await r.json();
       if (data.articles) allArticles = allArticles.concat(data.articles);
       else if (data.news) allArticles = allArticles.concat(data.news);
     } catch (e) {
@@ -22,19 +24,15 @@ export async function fetchAllNews() {
     }
   }
 
-  // Normalize articles
+  // Normalize categories
   allArticles = allArticles.map(article => {
     const content = ((article.title || '') + ' ' + (article.description || '')).toLowerCase();
-
     let category = 'Misc';
-
     if (/sport|football|soccer|cricket|basketball|tennis|rugby|olympics/.test(content)) category = 'Sports';
     else if (/movie|film|hollywood|celebrity|actor|actress|blockbuster|series/.test(content)) category = 'Movies';
     else if (/economy|market|finance|stock|business|trade|currency|investment/.test(content)) category = 'Economy';
     else if (/government|president|parliament|minister|policy|law|politics|election/.test(content)) category = 'Government';
     else if (/gossip|rumor|scandal|celebrity|buzz|trending/.test(content)) category = 'Gossip';
-    else category = 'Misc';
-
     return {
       title: article.title || article.headline || 'Untitled',
       description: article.description || article.content || '',
@@ -45,5 +43,5 @@ export async function fetchAllNews() {
     };
   });
 
-  return allArticles;
+  res.status(200).json(allArticles);
 }

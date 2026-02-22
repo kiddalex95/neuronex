@@ -1,4 +1,3 @@
-// suggestions.js
 import { getTopCategories } from '../utils/storage.js';
 import { renderArticles } from './renderer.js';
 
@@ -8,20 +7,13 @@ export function suggestArticles(allArticles) {
 
   if (!allArticles?.length) return;
 
-  // Get top categories the user reads
   const topCategories = getTopCategories();
 
-  // Filter articles matching top categories
-  let suggested = allArticles.filter(article => topCategories.includes(article.category));
+  let suggested = allArticles.filter(a => topCategories.includes(a.category));
 
-  // If nothing matches, pick random 5 articles
-  if (!suggested.length) {
-    suggested = allArticles.sort(() => Math.random() - 0.5).slice(0, 5);
-  } else {
-    suggested = suggested.sort(() => Math.random() - 0.5).slice(0, 5);
-  }
+  if (!suggested.length) suggested = allArticles.sort(() => Math.random() - 0.5).slice(0,5);
+  else suggested = suggested.sort(() => Math.random() - 0.5).slice(0,5);
 
-  // Render suggestion cards
   suggested.forEach(article => {
     const card = document.createElement('div');
     card.classList.add('suggestion-card');
@@ -48,7 +40,6 @@ export function suggestArticles(allArticles) {
     `;
 
     card.addEventListener('click', () => window.open(article.url, '_blank'));
-
     suggestionsContainer.appendChild(card);
   });
 }

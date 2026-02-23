@@ -8,108 +8,62 @@ const searchBtn = document.getElementById('search-btn');
 const categoryBtns = document.querySelectorAll('.cat-btn');
 const suggestionsContainer = document.getElementById('suggestions-container');
 
-// YOUR API KEYS (directly used)
-const NEWSAPI_KEY = 'a29a4b120e864fa9830f0c74ee9f77b9';
-const GNEWS_KEY = '3e44763ba8bf06cb0b515acda04fac0a';
-const WORLDNEWS_KEY = '583edae9863343e994cbbd56e72147cb';
-
 let readHistory = JSON.parse(localStorage.getItem('neuronex_read_history')) || [];
 
 // -------------------
-// Helper: fetch from a single API
+// Fetch from serverless API
 // -------------------
-async function fetchFromAPI(url, mapper) {
+async function fetchArticles(category = '', query = '') {
   try {
+    const url = `/api/news?category=${category}&q=${query}`;
     const res = await fetch(url);
     const data = await res.json();
-    if (!data) return [];
-    return (data.articles || []).map(mapper).filter(a => a.title && a.url);
+    return data.articles || [];
   } catch (err) {
-    console.error('API fetch error:', err);
+    console.error(err);
     return [];
   }
 }
 
 // -------------------
-// Fetch all articles
-// -------------------
-async function fetchArticles(category = '', query = '') {
-  const newsapiUrl = `https://newsapi.org/v2/top-headlines?country=us&apiKey=${NEWSAPI_KEY}${category ? `&category=${category}` : ''}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
-  const gnewsUrl = `https://gnews.io/api/v4/top-headlines?country=us&apikey=${GNEWS_KEY}${category ? `&topic=${category}` : ''}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
-  const worldUrl = `https://worldnewsapi.com/api/news?country=us&apikey=${WORLDNEWS_KEY}${category ? `&category=${category}` : ''}${query ? `&q=${encodeURIComponent(query)}` : ''}`;
-
-  // Map all APIs to unified format
-  const newsapiMapper = a => ({
-    title: a.title,
-    description: a.description,
-    url: a.url,
-    image: a.urlToImage || 'https://via.placeholder.com/300x180?text=No+Image'
-  });
-
-  const gnewsMapper = a => ({
-    title: a.title,
-    description: a.description || a.content,
-    url: a.url,
-    image: a.image || 'https://via.placeholder.com/300x180?text=No+Image'
-  });
-
-  const worldMapper = a => ({
-    title: a.heading || a.title,
-    description: a.content || a.description,
-    url: a.url,
-    image: a.imageUrl || 'https://via.placeholder.com/300x180?text=No+Image'
-  });
-
-  const [newsapiArticles, gnewsArticles, worldArticles] = await Promise.all([
-    fetchFromAPI(newsapiUrl, newsapiMapper),
-    fetchFromAPI(gnewsUrl, gnewsMapper),
-    fetchFromAPI(worldUrl, worldMapper)
-  ]);
-
-  let articles = [...newsapiArticles, ...gnewsArticles, ...worldArticles];
-
-  // Shuffle
-  articles = articles.sort(() => Math.random() - 0.5);
-
-  // Fallback placeholders if empty
-  if (!articles.length) {
-    articles = Array.from({ length: 6 }, (_, i) => ({
-      title: `Placeholder Article ${i + 1}`,
-      description: 'This is a placeholder article while real news loads.',
-      url: '#',
-      image: 'https://via.placeholder.com/300x180?text=News+Placeholder'
-    }));
-  }
-
-  return articles;
-}
-
-// -------------------
-// Render articles
+// Render Articles
 // -------------------
 function renderArticles(articles) {
   articlesContainer.innerHTML = '';
+
+  if (!articles.length) {
+    articlesContainer.innerHTML =
+      '<p style="text-align:center;grid-column:1/-1;">No articles found.</p>';
+    return;
+  }
+
   articles.forEach(article => {
     const card = document.createElement('div');
     card.classList.add('news-card');
+
     card.innerHTML = `
-      <img class="news-img" src="${article.image}" alt="Article Image">
+      <img class="news-img" src="${article.image}" alt="News Image">
       <h3 class="news-title">${article.title}</h3>
       <p class="news-desc">${article.description}</p>
       <a class="read-more" href="${article.url}" target="_blank">Read More</a>
     `;
-    card.querySelector('.read-more').addEventListener('click', () => addToHistory(article));
+
+    card.querySelector('.read-more').addEventListener('click', () => {
+      addToHistory(article);
+    });
+
     articlesContainer.appendChild(card);
   });
 }
 
 // -------------------
-// Breaking news
+// Breaking News
 // -------------------
 async function loadBreakingNews() {
   breakingNewsEl.textContent = 'Loading...';
   const articles = await fetchArticles();
-  breakingNewsEl.textContent = articles[0]?.title || 'No breaking news found';
+  breakingNewsEl.textContent =
+    articles.length > 0 ? articles[0].title : 'No breaking news available.';
 }
 
 // -------------------
@@ -118,7 +72,10 @@ async function loadBreakingNews() {
 searchBtn.addEventListener('click', async () => {
   const query = searchInput.value.trim();
   if (!query) return;
-  articlesContainer.innerHTML = `<p style="text-align:center;">Searching...</p>`;
+
+  articlesContainer.innerHTML =
+    '<p style="text-align:center;">Searching...</p>';
+
   const articles = await fetchArticles('', query);
   renderArticles(articles);
 });
@@ -129,14 +86,17 @@ searchBtn.addEventListener('click', async () => {
 categoryBtns.forEach(btn => {
   btn.addEventListener('click', async () => {
     const category = btn.dataset.category;
-    articlesContainer.innerHTML = `<p style="text-align:center;">Loading ${category}...</p>`;
+
+    articlesContainer.innerHTML =
+      `<p style="text-align:center;">Loading ${category}...</p>`;
+
     const articles = await fetchArticles(category);
     renderArticles(articles);
   });
 });
 
 // -------------------
-// Suggestions engine
+// Suggestions
 // -------------------
 function addToHistory(article) {
   readHistory.push(article);
@@ -147,8 +107,13 @@ function addToHistory(article) {
 
 function renderSuggestions() {
   suggestionsContainer.innerHTML = '';
+
   if (!readHistory.length) return;
-  const shuffled = readHistory.sort(() => Math.random() - 0.5).slice(0, 5);
+
+  const shuffled = [...readHistory]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 5);
+
   shuffled.forEach(article => {
     const div = document.createElement('div');
     div.classList.add('suggestion-card');
